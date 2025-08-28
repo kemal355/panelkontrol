@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>İnterkom Kontrol Paneli</title>
 
-  <!-- Önce Paho MQTT kütüphanesi -->
-  <script src="js/paho-mqtt.js"></script>
+  <!-- Paho MQTT JS (aynı klasörden) -->
+  <script src="paho-mqtt.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
@@ -51,11 +51,11 @@
 </div>
 
 <script>
-  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
+  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; 
   const port = 8884;
-  const path = "/mqtt"; // HiveMQ için şart
-  const mqttUser = "kemal123";    
-  const mqttPass = "Kemal12345";        
+  const path = "/mqtt"; // 🔑 HiveMQ için gerekli
+  const mqttUser = "kemal123"; 
+  const mqttPass = "Kemal12345";       
 
   let client;
   let counter = 0;
@@ -71,7 +71,7 @@
 
     client = new Paho.MQTT.Client(
       broker,
-      port,
+      Number(port),
       path,
       "webclient-" + Math.random()
     );
@@ -87,11 +87,13 @@
       if (message.destinationName === "ev/role1/durum") {
         if (message.payloadString === "ON") {
           document.getElementById("feedback").innerText = "Konuşma başlatıldı ✅";
+          counter++;
+          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
         } else if (message.payloadString === "OFF") {
           document.getElementById("feedback").innerText = "Konuşma kapatıldı ⛔";
+          counter++;
+          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
         }
-        counter++;
-        document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
       }
 
       if (message.destinationName === "ev/role1/ping" && message.payloadString === "ONLINE") {
@@ -122,7 +124,7 @@
   }
 
   function sendMessage(topic, message) {
-    if (!client || !client.isConnected) {
+    if (!client || !client.isConnected()) {
       alert("Broker'a bağlı değilsin!");
       return;
     }
