@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>İnterkom Kontrol Paneli</title>
 
-  <!-- Paho MQTT JS (repo içindeki js klasöründen) -->
+  <!-- Paho MQTT JS -->
   <script src="js/paho-mqtt.min.js"></script>
 
   <style>
@@ -51,10 +51,10 @@
 </div>
 
 <script>
-  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; // HiveMQ hostname
+  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; 
   const port = 8884; 
-  const mqttUser = "kemal123";   // kendi HiveMQ kullanıcı adını buraya yaz
-  const mqttPass = "Kemal12345";           // kendi HiveMQ şifreni buraya yaz
+  const mqttUser = "kemal123";   // 👉 kendi kullanıcı adını yaz
+  const mqttPass = "Kemal12345";           // 👉 kendi şifreni yaz
 
   let client;
   let counter = 0;
@@ -68,10 +68,10 @@
   function connect() {
     console.log("MQTT bağlanıyor...");
 
-    // Paho Client oluşturma
     client = new Paho.MQTT.Client(
       broker,
       Number(port),
+      "/mqtt", // HiveMQ için gerekli path
       "webclient-" + Math.random()
     );
 
@@ -102,7 +102,6 @@
       }
     };
 
-    // Bağlantı
     client.connect({
       useSSL: true,
       userName: mqttUser,
@@ -124,7 +123,7 @@
   }
 
   function sendMessage(topic, message) {
-    if (!client || !client.isConnected()) {
+    if (!client || !client.isConnected) {
       alert("Broker'a bağlı değilsin!");
       return;
     }
