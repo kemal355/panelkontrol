@@ -50,6 +50,10 @@
     .off:hover {
       background: #c23616;
     }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -66,8 +70,10 @@
     <button class="off" onclick="publish('relay2','OFF')">KAPAT</button>
   </div>
 
+  <div id="status">🔴 Bağlantı yok</div>
+
   <script>
-    // 🔹 HiveMQ bilgilerini buraya gir
+    // 🔹 HiveMQ bilgilerini buraya yaz
     const options = {
       username: "kemal123",
       password: "Kemal12345",
@@ -76,15 +82,21 @@
       reconnectPeriod: 4000,
     };
 
-    // 🔹 HiveMQ WebSocket bağlantısı (URL dikkat!)
-    const client  = mqtt.connect("wss://6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud:8884/mqtt", options);
+    // 🔹 HiveMQ WebSocket adresi
+    const client  = mqtt.connect("wss://xxxxx.s1.eu.hivemq.cloud:8884/mqtt", options);
 
     client.on("connect", () => {
       console.log("✅ HiveMQ'ya bağlandı!");
+      document.getElementById("status").innerHTML = "🟢 HiveMQ'ya bağlı";
     });
 
     client.on("error", (err) => {
       console.error("❌ Bağlantı hatası: ", err);
+      document.getElementById("status").innerHTML = "🔴 Bağlantı hatası";
+    });
+
+    client.on("close", () => {
+      document.getElementById("status").innerHTML = "🔴 Bağlantı koptu";
     });
 
     function publish(topic, message) {
