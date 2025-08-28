@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>MQTT Test Paneli</title>
-  <!-- Paho MQTT kütüphanesi (CDN üzerinden) -->
+  <!-- Paho MQTT (CDN) -->
   <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
 </head>
 <body>
@@ -11,30 +11,30 @@
   <button onclick="sendMessage()">Mesaj Gönder</button>
 
   <script>
-    console.log("MQTT bağlanıyor...");
+    let client = null; // global tanımla
 
-    // 🔹 HiveMQ Cloud veya kendi broker ayarlarını buraya gir
-    const host = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
-    const port = 8884; // wss için port
-    const clientId = "webclient-" + Math.random();
-
-    // MQTT client oluştur
-    let client = new Paho.MQTT.Client(host, port, "/mqtt", clientId);
-
-    // Callback’ler
-    client.onConnectionLost = (resp) => {
-      console.log("Bağlantı koptu ❌", resp);
-    };
-    client.onMessageArrived = (msg) => {
-      console.log("Mesaj geldi:", msg.payloadString);
-    };
-
-    // Bağlan
     function connect() {
+      console.log("MQTT bağlanıyor...");
+
+      // 🔹 Broker bilgilerini senin HiveMQ ayarlarına göre doldur
+      const host = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
+      const port = 8884;
+      const path = "/mqtt";
+      const clientId = "webclient-" + Math.random();
+
+      client = new Paho.MQTT.Client(host, Number(port), path, clientId);
+
+      client.onConnectionLost = (resp) => {
+        console.log("Bağlantı koptu ❌", resp.errorMessage);
+      };
+      client.onMessageArrived = (msg) => {
+        console.log("Mesaj geldi:", msg.payloadString);
+      };
+
       client.connect({
-        useSSL: true, // 🔹 HTTPS üzerinden geldiğimiz için şart
-        userName: "kemal123", // HiveMQ Cloud kullanıcı adın
-        password: "Kemal12345", // HiveMQ Cloud şifren
+        useSSL: true,
+        userName: "kemal123",  // 🔹 senin kullanıcı
+        password: "Kemal12345",          // 🔹 senin şifre
         onSuccess: () => {
           console.log("MQTT bağlantısı başarılı ✅");
           client.subscribe("deneme/test");
@@ -45,9 +45,8 @@
       });
     }
 
-    // Mesaj gönder
     function sendMessage() {
-      if (client.isConnected()) {
+      if (client && client.isConnected()) {
         let msg = new Paho.MQTT.Message("Merhaba MQTT!");
         msg.destinationName = "deneme/test";
         client.send(msg);
@@ -57,6 +56,7 @@
       }
     }
 
+    // Sayfa yüklenince bağlantıyı başlat
     window.onload = connect;
   </script>
 </body>
