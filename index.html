@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>İnterkom Kontrol Paneli</title>
 
-  <!-- Paho MQTT JS (kendi repo içindeki js klasöründen) -->
-  <script src="js/paho-mqtt.min.js"></script>
+  <!-- Paho MQTT JS (repo içindeki js klasöründen) -->
+  <script src="./js/paho-mqtt.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
@@ -51,10 +51,10 @@
 </div>
 
 <script>
-  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; // HiveMQ broker adresin
+  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; 
   const port = 8884; 
-  const mqttUser = "kemal123";       // kullanıcı adın
-  const mqttPass = "Kemal12345";        // şifren
+  const mqttUser = "kemal123";     
+  const mqttPass = "Kemal12345";         
 
   let client;
   let counter = 0;
