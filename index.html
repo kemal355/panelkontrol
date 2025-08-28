@@ -5,7 +5,7 @@
   <title>İnterkom Kontrol Paneli</title>
 
   <!-- Paho MQTT JS -->
-  <script src="js/paho-mqtt.min.js"></script>
+  <script src="https://unpkg.com/paho-mqtt/mqttws31.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
@@ -51,10 +51,12 @@
 </div>
 
 <script>
+  // HiveMQ Cloud Bilgileri
   const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; 
   const port = 8884; 
-  const mqttUser = "kemal123";   // buraya kullanıcı adını yaz
-  const mqttPass = "Kemal12345";           // buraya şifreni yaz
+  const path = "/mqtt"; 
+  const mqttUser = "kemal123";   // 👉 kendi kullanıcı adını yaz
+  const mqttPass = "Kemal12345";           // 👉 kendi şifreni yaz
 
   let client;
   let counter = 0;
@@ -68,12 +70,8 @@
   function connect() {
     console.log("MQTT bağlanıyor...");
 
-    client = new Paho.MQTT.Client(
-      broker,
-      port,
-      "/mqtt",                        // ✅ WebSocket path eklendi
-      "webclient-" + Math.random()
-    );
+    // ✅ Burada path /mqtt eklendi
+    client = new Paho.MQTT.Client(broker, port, path, "webclient-" + Math.random());
 
     client.onConnectionLost = function() {
       document.getElementById("status").innerText = "BAĞLANTI KOPTU ❌";
@@ -115,15 +113,14 @@
         client.subscribe("ev/role1/ping");
       },
       onFailure: function(err) {
-        console.error("Bağlantı hatası:", err?.errorMessage || err);
-        document.getElementById("status").innerText = "BAĞLANTI HATASI ❌";
-        document.getElementById("status").className = "offline";
+        console.error("Bağlantı hatası:", err);
+        alert("MQTT Bağlantı hatası: " + (err.errorMessage || JSON.stringify(err)));
       }
     });
   }
 
   function sendMessage(topic, message) {
-    if (!client || !client.isConnected) {   // ✅ artık property
+    if (!client || !client.isConnected()) {
       alert("Broker'a bağlı değilsin!");
       return;
     }
