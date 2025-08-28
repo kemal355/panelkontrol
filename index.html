@@ -2,140 +2,62 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>İnterkom Kontrol Paneli</title>
-
-  <!-- Önce MQTT kütüphanesi -->
-  <script src="paho-mqtt.js"></script>
-
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    .panel { text-align: center; padding: 40px; }
-    h1 { color: #333; }
-    button {
-      padding: 20px 40px;
-      margin: 20px;
-      font-size: 20px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .btn-on { background: #4CAF50; color: white; }
-    .btn-off { background: #f44336; color: white; }
-    .status { font-size: 22px; margin: 20px; }
-    .online { color: green; font-weight: bold; }
-    .offline { color: red; font-weight: bold; }
-    .counter {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      background: #333;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 18px;
-    }
-    .feedback { font-size: 18px; margin-top: 20px; color: #333; }
-  </style>
+  <title>MQTT Test Paneli</title>
+  <!-- Paho MQTT kütüphanesi (CDN üzerinden) -->
+  <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
 </head>
 <body>
+  <h1>MQTT Test Paneli</h1>
+  <button onclick="sendMessage()">Mesaj Gönder</button>
 
-<div id="panel" class="panel">
-  <div class="counter" id="counter">Yapılan Görüşme: 0</div>
-  <h1>İnterkom Kontrol Paneli</h1>
-  <div class="status">Durum: <span id="status" class="offline">BAĞLANTI YOK ❌</span></div>
-  <div class="status">ESP: <span id="espStatus" class="offline">Kontrol ediliyor...</span></div>
-  <button class="btn-on" onclick="sendMessage('ev/role1','ON')">Konuşmayı Aç</button>
-  <button class="btn-off" onclick="sendMessage('ev/role1','OFF')">Konuşmayı Kapat</button>
-  <div class="feedback" id="feedback">Henüz işlem yapılmadı</div>
-</div>
-
-<script>
-  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
-  const port = 8884; 
-  const path = "/mqtt";  // HiveMQ Cloud için gerekli
-  const mqttUser = "kemal123";    
-  const mqttPass = "Kemal12345";        
-
-  let client;
-  let counter = 0;
-  let espLastPing = Date.now();
-
-  window.onload = function() {
-    connect();
-    setInterval(checkEspStatus, 3000);
-  };
-
-  function connect() {
+  <script>
     console.log("MQTT bağlanıyor...");
 
-    client = new Paho.MQTT.Client(broker, port, path, "webclient-" + Math.random());
+    // 🔹 HiveMQ Cloud veya kendi broker ayarlarını buraya gir
+    const host = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
+    const port = 8884; // wss için port
+    const clientId = "webclient-" + Math.random();
 
-    client.onConnectionLost = function() {
-      document.getElementById("status").innerText = "BAĞLANTI KOPTU ❌";
-      document.getElementById("status").className = "offline";
+    // MQTT client oluştur
+    let client = new Paho.MQTT.Client(host, port, "/mqtt", clientId);
+
+    // Callback’ler
+    client.onConnectionLost = (resp) => {
+      console.log("Bağlantı koptu ❌", resp);
+    };
+    client.onMessageArrived = (msg) => {
+      console.log("Mesaj geldi:", msg.payloadString);
     };
 
-    client.onMessageArrived = function(message) {
-      console.log("Mesaj geldi:", message.destinationName, message.payloadString);
-
-      if (message.destinationName === "ev/role1/durum") {
-        if (message.payloadString === "ON") {
-          document.getElementById("feedback").innerText = "Konuşma başlatıldı ✅";
-          counter++;
-          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
-        } else if (message.payloadString === "OFF") {
-          document.getElementById("feedback").innerText = "Konuşma kapatıldı ⛔";
-          counter++;
-          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
+    // Bağlan
+    function connect() {
+      client.connect({
+        useSSL: true, // 🔹 HTTPS üzerinden geldiğimiz için şart
+        userName: "kemal123", // HiveMQ Cloud kullanıcı adın
+        password: "Kemal12345", // HiveMQ Cloud şifren
+        onSuccess: () => {
+          console.log("MQTT bağlantısı başarılı ✅");
+          client.subscribe("deneme/test");
+        },
+        onFailure: (err) => {
+          console.log("Bağlantı hatası ❌", err.errorMessage);
         }
-      }
-
-      if (message.destinationName === "ev/role1/ping" && message.payloadString === "ONLINE") {
-        espLastPing = Date.now();
-        document.getElementById("espStatus").innerText = "ESP Online ✔";
-        document.getElementById("espStatus").className = "online";
-      }
-    };
-
-    client.connect({
-      useSSL: true,
-      userName: mqttUser,
-      password: mqttPass,
-      onSuccess: function() {
-        console.log("MQTT bağlantısı başarılı ✅");
-        document.getElementById("status").innerText = "ONLINE ✔";
-        document.getElementById("status").className = "online";
-
-        client.subscribe("ev/role1/durum");
-        client.subscribe("ev/role1/ping");
-      },
-      onFailure: function(err) {
-        console.error("Bağlantı hatası:", err.errorMessage);
-        document.getElementById("status").innerText = "BAĞLANTI HATASI ❌";
-        document.getElementById("status").className = "offline";
-      }
-    });
-  }
-
-  function sendMessage(topic, message) {
-    if (!client || !client.isConnected) {
-      alert("Broker'a bağlı değilsin!");
-      return;
+      });
     }
-    const msg = new Paho.MQTT.Message(message);
-    msg.destinationName = topic;
-    client.send(msg);
-  }
 
-  function checkEspStatus() {
-    let now = Date.now();
-    if (now - espLastPing > 6000) {
-      document.getElementById("espStatus").innerText = "ESP Bağlı Değil ❌";
-      document.getElementById("espStatus").className = "offline";
+    // Mesaj gönder
+    function sendMessage() {
+      if (client.isConnected()) {
+        let msg = new Paho.MQTT.Message("Merhaba MQTT!");
+        msg.destinationName = "deneme/test";
+        client.send(msg);
+        console.log("Mesaj gönderildi ✅");
+      } else {
+        console.log("❌ Broker'a bağlı değilsin!");
+      }
     }
-  }
-</script>
 
+    window.onload = connect;
+  </script>
 </body>
 </html>
