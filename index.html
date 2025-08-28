@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>İnterkom Kontrol Paneli</title>
 
-  <!-- Paho MQTT JS (doğru link) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
+  <!-- Paho MQTT JS (kendi repo içindeki js klasöründen) -->
+  <script src="js/paho-mqtt.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
@@ -51,10 +51,10 @@
 </div>
 
 <script>
-  // 🔑 HiveMQ Cloud broker bilgilerini doldur
-  const brokerUrl = "wss://6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud:8884/mqtt";
-  const mqttUser = "kemal123";   // HiveMQ Cloud kullanıcı adın
-  const mqttPass = "Kemal12345";           // HiveMQ Cloud şifren
+  const broker = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud"; // HiveMQ broker adresin
+  const port = 8884; 
+  const mqttUser = "kemal123";       // kullanıcı adın
+  const mqttPass = "Kemal12345";        // şifren
 
   let client;
   let counter = 0;
@@ -68,7 +68,7 @@
   function connect() {
     console.log("MQTT bağlanıyor...");
 
-    client = new Paho.MQTT.Client(brokerUrl, "webclient-" + Math.random());
+    client = new Paho.MQTT.Client(broker, port, "webclient-" + Math.random());
 
     client.onConnectionLost = function() {
       document.getElementById("status").innerText = "BAĞLANTI KOPTU ❌";
