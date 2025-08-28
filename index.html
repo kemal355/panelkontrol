@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>İnterkom Kontrol Paneli</title>
 
-  <!-- MQTT Kütüphanesi -->
+  <!-- Paho MQTT JS -->
   <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
 
   <style>
@@ -45,16 +45,15 @@
   <h1>İnterkom Kontrol Paneli</h1>
   <div class="status">Durum: <span id="status" class="offline">BAĞLANTI YOK ❌</span></div>
   <div class="status">ESP: <span id="espStatus" class="offline">Kontrol ediliyor...</span></div>
-  <button class="btn-on" onclick="sendMessage('ev/role1/komut','ON')">Konuşmayı Aç</button>
-  <button class="btn-off" onclick="sendMessage('ev/role1/komut','OFF')">Konuşmayı Kapat</button>
+  <button class="btn-on" onclick="sendMessage('ev/role1','ON')">Konuşmayı Aç</button>
+  <button class="btn-off" onclick="sendMessage('ev/role1','OFF')">Konuşmayı Kapat</button>
   <div class="feedback" id="feedback">Henüz işlem yapılmadı</div>
 </div>
 
 <script>
-  const host = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
-  const port = 8884;
-  const mqttUser = "kemal123";   // HiveMQ Cloud username
-  const mqttPass = "Kemal12345";           // HiveMQ Cloud password
+  const brokerUrl = "wss://6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud:8884/mqtt";
+  const mqttUser = "kemal123";   // HiveMQ Cloud kullanıcı adın
+  const mqttPass = "Kemal12345";           // HiveMQ Cloud şifren
 
   let client;
   let counter = 0;
@@ -62,12 +61,13 @@
 
   window.onload = function() {
     connect();
-    setInterval(checkEspStatus, 3000); // 3 sn de bir kontrol
+    setInterval(checkEspStatus, 3000);
   };
 
   function connect() {
     console.log("MQTT bağlanıyor...");
-    client = new Paho.MQTT.Client(host, port, "webclient-" + Math.random());
+
+    client = new Paho.MQTT.Client(brokerUrl, "webclient-" + Math.random());
 
     client.onConnectionLost = function() {
       document.getElementById("status").innerText = "BAĞLANTI KOPTU ❌";
