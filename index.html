@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>İnterkom Kontrol Paneli</title>
+
+  <!-- MQTT Kütüphanesi -->
+  <script src="https://unpkg.com/paho-mqtt@1.1.0/paho-mqtt-min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .panel { text-align: center; padding: 40px; }
+    h1 { color: #333; }
+    button {
+      padding: 20px 40px;
+      margin: 20px;
+      font-size: 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .btn-on { background: #4CAF50; color: white; }
+    .btn-off { background: #f44336; color: white; }
+    .status { font-size: 22px; margin: 20px; }
+    .online { color: green; font-weight: bold; }
+    .offline { color: red; font-weight: bold; }
+    .counter {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 18px;
+    }
+    .feedback { font-size: 18px; margin-top: 20px; color: #333; }
+  </style>
+</head>
+<body>
+
+<div id="panel" class="panel">
+  <div class="counter" id="counter">Yapılan Görüşme: 0</div>
+  <h1>İnterkom Kontrol Paneli</h1>
+  <div class="status">Durum: <span id="status" class="offline">BAĞLANTI YOK ❌</span></div>
+  <div class="status">ESP: <span id="espStatus" class="offline">Kontrol ediliyor...</span></div>
+  <button class="btn-on" onclick="sendMessage('ev/role1/komut','ON')">Konuşmayı Aç</button>
+  <button class="btn-off" onclick="sendMessage('ev/role1/komut','OFF')">Konuşmayı Kapat</button>
+  <div class="feedback" id="feedback">Henüz işlem yapılmadı</div>
+</div>
+
+<script>
+  const host = "6db25b9004e64ab084db4a92d1576615.s1.eu.hivemq.cloud";
+  const port = 8884;
+  const mqttUser = "kemal123";   // HiveMQ Cloud username
+  const mqttPass = "Kemal12345";           // HiveMQ Cloud password
+
+  let client;
+  let counter = 0;
+  let espLastPing = Date.now();
+
+  window.onload = function() {
+    connect();
+    setInterval(checkEspStatus, 3000); // 3 sn de bir kontrol
+  };
+
+  function connect() {
+    console.log("MQTT bağlanıyor...");
+    client = new Paho.MQTT.Client(host, port, "webclient-" + Math.random());
+
+    client.onConnectionLost = function() {
+      document.getElementById("status").innerText = "BAĞLANTI KOPTU ❌";
+      document.getElementById("status").className = "offline";
+    };
+
+    client.onMessageArrived = function(message) {
+      console.log("Mesaj geldi:", message.destinationName, message.payloadString);
+
+      if (message.destinationName === "ev/role1/durum") {
+        if (message.payloadString === "ON") {
+          document.getElementById("feedback").innerText = "Konuşma başlatıldı ✅";
+          counter++;
+          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
+        } else if (message.payloadString === "OFF") {
+          document.getElementById("feedback").innerText = "Konuşma kapatıldı ⛔";
+          counter++;
+          document.getElementById("counter").innerText = "Yapılan Görüşme: " + counter;
+        }
+      }
+
+      if (message.destinationName === "ev/role1/ping" && message.payloadString === "ONLINE") {
+        espLastPing = Date.now();
+        document.getElementById("espStatus").innerText = "ESP Online ✔";
+        document.getElementById("espStatus").className = "online";
+      }
+    };
+
+    client.connect({
+      useSSL: true,
+      userName: mqttUser,
+      password: mqttPass,
+      onSuccess: function() {
+        console.log("MQTT bağlantısı başarılı ✅");
+        document.getElementById("status").innerText = "ONLINE ✔";
+        document.getElementById("status").className = "online";
+
+        client.subscribe("ev/role1/durum");
+        client.subscribe("ev/role1/ping");
+      },
+      onFailure: function(err) {
+        console.error("Bağlantı hatası:", err.errorMessage);
+        document.getElementById("status").innerText = "BAĞLANTI HATASI ❌";
+        document.getElementById("status").className = "offline";
+      }
+    });
+  }
+
+  function sendMessage(topic, message) {
+    if (!client || !client.isConnected()) {
+      alert("Broker'a bağlı değilsin!");
+      return;
+    }
+    const msg = new Paho.MQTT.Message(message);
+    msg.destinationName = topic;
+    client.send(msg);
+  }
+
+  function checkEspStatus() {
+    let now = Date.now();
+    if (now - espLastPing > 6000) {
+      document.getElementById("espStatus").innerText = "ESP Bağlı Değil ❌";
+      document.getElementById("espStatus").className = "offline";
+    }
+  }
+</script>
+
+</body>
+</html>
